@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "747120066300",
+    "project_id": "acepotdg",
+    "storage_bucket": "acepotdg.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:747120066300:android:72187abefc5cc6bed82179",
+        "android_client_info": {
+          "package_name": "com.acepotdg.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZvE7D0lxCEVqm_9Bz8t0rBM4bbq6aZV0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
