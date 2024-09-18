@@ -128,24 +128,25 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     for (QueryDocumentSnapshot division in divisionsSnapshot.docs) {
       // Extract division name or value
       String? divisionName = division.get('name') as String?; // Adjust based on your Firestore schema
+      print('--------------------');
       print(divisionName);
+      print('--------------------');
 
       if (divisionName == null) {
         print('Division name is null for document: ${division.id}');
         continue; // Skip if the division name is null
       }
 
-      print('--------------------');
       QuerySnapshot divisionSnapshot = await _firestore
         .collection('organizations')
         .doc('houstondiscgolf')
         .collection('members')
-        .where('division', isEqualTo: division.id)
+        .where('division', isEqualTo: divisionName)
         .where('checkedin', isEqualTo: true)
         .orderBy('positionNo', descending: false)
         .get();
 
-      print('Query snapshot size: ${divisionSnapshot.size}');
+      //print('Query snapshot size: ${divisionSnapshot.size}');
 
       List<QueryDocumentSnapshot> players = divisionSnapshot.docs;
 
@@ -159,20 +160,17 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         .map((player) {
           final data = player.data() as Map<String, dynamic>?; // Safely cast to Map
           final tag = data?['tag'];
-          print('Raw Tag Data: $tag');
           if (tag == null) {
-            print('Tag is null for player ${player.id}');
             return 0; // Default to 0 if tag is null
           }
-          // Attempt to convert tag to an integer
+          // Convert tag to an integer
           return int.tryParse(tag.toString()) ?? 0;
         })
+        .where((tag) => tag > 0) // Ensure only tags > 0 are included
         .toList();
 
-      print('Tags:');
-      for (int tag in tags) {
-        print(tag);
-      }
+      // Sort the tags in ascending order
+      tags.sort();
 
       print('--------------------');
       print('Pre Batch update call');
@@ -182,7 +180,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       for (int i = 0; i < players.length; i++) {
         DocumentReference playerRef = players[i].reference;
         int newTag = i < tags.length ? tags[i] : 0; // Handle case where tags list may be shorter
-        print('Batch update for tag: $newTag completed successfully.');
+        print('${players[i].id} new tag: $newTag');
         batch.update(playerRef, {'tag': newTag});
         hasUpdates = true;
       }
@@ -234,7 +232,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
             IconButton(
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.person),
               color: Colors.white,
               onPressed: () {
                 Navigator.of(context).push(
@@ -280,115 +278,118 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   final divisions = divisionSnapshot.data!.docs;
 
                   return ListView.builder(
-                    itemCount: divisions.length,
-                    itemBuilder: (context, index) {
-                      var divisionDoc = divisions[index];
-                      var divisionData = divisionDoc.data() as Map<String, dynamic>;
-                      final divisionName = divisionData['name'];
+  itemCount: divisions.length,
+  itemBuilder: (context, index) {
+    var divisionDoc = divisions[index];
+    var divisionData = divisionDoc.data() as Map<String, dynamic>;
+    final divisionName = divisionData['name'];
 
-                      return StreamBuilder<QuerySnapshot>(
-                        stream: _firestore.collection('organizations')
-                                          .doc('houstondiscgolf')
-                                          .collection('members')
-                                          .where('checkedin', isEqualTo: true)
-                                          .where('division', isEqualTo: divisionDoc.id)
-                                          .orderBy('positionNo', descending: false)
-                                          .snapshots(),
-                        builder: (context, userSnapshot) {
-                          if (userSnapshot.hasError) {
-                            print("Error: ${userSnapshot.error}");
-                            return const Text('Error occurred');
-                          }
+    // Print division name and document ID for debugging
+    print('Division Name: $divisionName, Division Doc ID: ${divisionDoc.id}');
 
-                          final documents = userSnapshot.data?.docs;
-                          // Print documents for debugging
-                          documents?.forEach((doc) {
-                            print(doc.data()); // Log each document
-                          });
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('organizations')
+                        .doc('houstondiscgolf')
+                        .collection('members')
+                        .where('checkedin', isEqualTo: true)
+                        .where('division', isEqualTo: divisionName)  // Use the division name for the query
+                        .orderBy('positionNo', descending: false)
+                        .snapshots(),
+      builder: (context, userSnapshot) {
+        if (userSnapshot.hasError) {
+          print("Error: ${userSnapshot.error}");
+          return const Text('Error occurred');
+        }
 
-                          final users = userSnapshot.data?.docs ?? [];
-                          return Theme(
-                            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                            child: ExpansionTile(
-                              title: Text(divisionName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                              initiallyExpanded: true,
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        flex: 15,
-                                        child: Text(
-                                          'POS',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 70,
-                                        child: Text(
-                                          'NAME',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 15,
-                                        child: Text(
-                                          'TAG',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                ...users.isEmpty
-                                    ? const [ListTile(title: Text('No players checked in'))]
-                                    : users.map((userDoc) {
-                                        var userData = userDoc.data() as Map<String, dynamic>;
-                                        final name = userData['name'] ?? 'Unknown';
-                                        final tag = userData['tag'] ?? 0; // Retrieve the tag
-                                        final position = userData['position'] ?? 'N/A';
+        final documents = userSnapshot.data?.docs;
+        // Print documents for debugging
+        documents?.forEach((doc) {
+          print(doc.data()); // Log each document
+        });
 
-                                        return ListTile(
-                                          title: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                flex: 15,
-                                                child: Center(  // Center the position text
-                                                  child: Text(
-                                                    '$position', 
-                                                    style: const TextStyle(fontSize: 16),
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 70,
-                                                child: Text(name, style: const TextStyle(fontSize: 16)),
-                                              ),
-                                              Expanded(
-                                                flex: 15,
-                                                child: Center(  // Center the tag text
-                                                  child: Text(
-                                                    tag != 0 ? '$tag' : 'X',
-                                                    style: const TextStyle(fontSize: 16),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }).toList(),
-                              ],
+        final users = userSnapshot.data?.docs ?? [];
+        return Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              title: Text(divisionName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              initiallyExpanded: true,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            flex: 15,
+                            child: Text(
+                              'POS',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
+                          ),
+                          Expanded(
+                            flex: 70,
+                            child: Text(
+                              'NAME',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 15,
+                            child: Text(
+                              'TAG',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ...users.isEmpty
+                        ? const [ListTile(title: Text('No players checked in'))]
+                        : users.map((userDoc) {
+                            var userData = userDoc.data() as Map<String, dynamic>;
+                            final name = userData['name'] ?? 'Unknown';
+                            final tag = userData['tag'] ?? 0; // Retrieve the tag
+                            final position = userData['position'] ?? 'N/A';
+
+                            return ListTile(
+                              title: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    flex: 15,
+                                    child: Center(  // Center the position text
+                                      child: Text(
+                                        '$position', 
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 70,
+                                    child: Text(name, style: const TextStyle(fontSize: 16)),
+                                  ),
+                                  Expanded(
+                                    flex: 15,
+                                    child: Center(  // Center the tag text
+                                      child: Text(
+                                        tag != 0 ? '$tag' : 'X',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

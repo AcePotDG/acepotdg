@@ -14,11 +14,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
-  final TextEditingController _udiscname = TextEditingController();
+  //final TextEditingController _udiscname = TextEditingController();
 
-  Future<void> registerNewUser() async {
-    if (!_formKey.currentState!.validate()) return; // Ensure form is valid
-
+  registerNewUser() async {
     try {
       // Register user with FirebaseAuth
       UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -36,6 +34,16 @@ class _RegisterPageState extends State<RegisterPage> {
         //'udiscname': _udiscname.text, // Ensure you use .text to get the value from the controller
         // Add any additional fields you want here, e.g., name, role, etc.
       });
+
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const LoginPage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return child; // No animation
+          },
+        ),
+      );
       
       print("User registered and added to Firestore successfully.");
       // Optionally navigate to another page or show a success message
@@ -185,7 +193,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        registerNewUser();
+                        if (_formKey.currentState!.validate()) {
+                          registerNewUser();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.lightBlue.shade400,

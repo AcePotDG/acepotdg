@@ -1,13 +1,15 @@
-import 'package:acepotdg/api_service.dart';
+import 'package:acepotdg/pages/checkin/checked_users.dart';
+import 'package:acepotdg/pages/checkin/new_user.dart';
 import 'package:acepotdg/pages/checkin/user_checkin.dart';
+import 'package:acepotdg/pages/event/event_list.dart';
 import 'package:acepotdg/pages/event/leaderboard.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CheckinListPage extends StatefulWidget {
-  final String eventId; // Add this line to accept event ID
+  final String eventId;
 
-  const CheckinListPage({super.key, required this.eventId}); // Constructor to accept event ID
+  const CheckinListPage({super.key, required this.eventId});
   
   @override
   _CheckinListPageState createState() => _CheckinListPageState();
@@ -21,28 +23,44 @@ class _CheckinListPageState extends State<CheckinListPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.lightBlue.shade400,
-        centerTitle: true, // Center the title automatically
-        automaticallyImplyLeading: false, // Hide the default back button
-        title: const Text(
-          "Checkin Player",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: Colors.white,
-          onPressed: () {
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: widget.eventId,),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return child; // No animation
-                },
-              ),
-            );
-          },
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              color: Colors.white,
+              onPressed: () {
+                Navigator.of(context).push(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: widget.eventId),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      return child; // No animation
+                    },
+                  ),
+                );
+              },
+            ),
+            const Text(
+              "Check-in Players",
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            IconButton(
+              icon: const Icon(Icons.list),
+              color: Colors.white,
+              onPressed: () {
+                Navigator.of(context).push(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => CheckedUsersPage(eventId: widget.eventId),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      return child; // No animation
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
       body: Column(
@@ -66,7 +84,7 @@ class _CheckinListPageState extends State<CheckinListPage> {
                   .collection("organizations")
                   .doc("houstondiscgolf")
                   .collection("members")
-                  .where("checkedin", isEqualTo: false) // Ensure this matches the index field
+                  .where("checkedin", isEqualTo: false)
                   .where("nameLowercase", isGreaterThanOrEqualTo: _searchText)
                   .where("nameLowercase", isLessThanOrEqualTo: '$_searchText\uf8ff')
                   .snapshots(),
@@ -106,41 +124,26 @@ class _CheckinListPageState extends State<CheckinListPage> {
                   },
                 );
               },
-            )
+            ),
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Navigate to the new user creation page
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => NewUserPage(eventId: widget.eventId), // Adjust with your page
+            ),
+          );
+        },
+        backgroundColor: Colors.lightBlue.shade400,
+        icon: const Icon(Icons.add, color: Colors.white), // Plus sign
+        label: const Text(
+          'New',
+          style: TextStyle(color: Colors.white), // Text "New"
+        ),
+      ),
     );
-  }
-
-  void _checkUserOnLeaderboard(QueryDocumentSnapshot user) async {
-    // This function is not used, you can either remove it or integrate it where needed
-    String userName = user["name"];
-    final leaderboardData = await ApiService().fetchEventData(widget.eventId); // Fetch leaderboard
-
-    bool found = false;
-    leaderboardData.forEach((division, results) {
-      for (var result in results) {
-        if (result['name'] == userName) {
-          found = true;
-          // Add position and division to Firestore
-          FirebaseFirestore.instance
-              .collection("organizations")
-              .doc("houstondiscgolf")
-              .collection("members")
-              .doc(user.id) // Use userId
-              .update({
-            "division": division,
-            "position": result['position'],
-          });
-        }
-      }
-    });
-
-    if (found) {
-      print("$userName checked in and found on leaderboard.");
-    } else {
-      print("$userName not found on leaderboard.");
-    }
   }
 }

@@ -141,7 +141,7 @@ exports.updateUserDatabase = onRequest(async (req, res) => {
       return;
     }
 
-    await updateUserDatabase(eventId);
+    await updateUserDatabaseEvent(eventId);
 
     res.status(200).send("User database updated successfully.");
   } catch (error) {
@@ -193,7 +193,7 @@ async function getScoreboardData(eventId) {
  * @param {string} eventId
  * @return {Promise<void>}
  */
-async function updateUserDatabase(eventId) {
+async function updateUserDatabaseEvent(eventId) {
   try {
     const participantsData = await getParticipantData(eventId); // Use eventId
     const scoreboardData = await getScoreboardData(eventId); // Use eventId
