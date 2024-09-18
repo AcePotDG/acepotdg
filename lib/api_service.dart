@@ -2,9 +2,9 @@ import 'dart:convert';  // Make sure this import is present for jsonDecode
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String getScoreboardData = 'https://us-central1-ace-pot.cloudfunctions.net/getScoreboardData';
-  final String getParticipantData = 'https://us-central1-ace-pot.cloudfunctions.net/getParticipantData';
-  final String updateUserData = 'https://us-central1-ace-pot.cloudfunctions.net/updateUserDatabase';
+  final String getScoreboardData = 'https://us-central1-acepotdg.cloudfunctions.net/getScoreboardData';
+  final String getParticipantData = 'https://us-central1-acepotdg.cloudfunctions.net/getParticipantData';
+  final String updateUserData = 'https://us-central1-acepotdg.cloudfunctions.net/updateUserDatabase';
 
   Future<void> updateUserDatabase(String eventId) async {
     try {

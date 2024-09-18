@@ -84,7 +84,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       if (results != null) {
         for (var playerData in results) {
           final playerName = playerData['name'];
-          final playerNameLowercase = playerData['nameLowercase'];
           final playerPosition = playerData['position'];
           final playerPositionNo = playerData['positionNo'];
 
@@ -98,9 +97,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               final userDoc = userQuerySnapshot.docs[0];
               final userId = userDoc.id;
 
-              // TODO: Check if nameLowercase is empty
               batch.update(userDoc.reference, {
-                'nameLowercase': playerNameLowercase,
                 'position': playerPosition,
                 'positionNo': playerPositionNo,
               });
@@ -126,7 +123,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         .get();
         
     for (QueryDocumentSnapshot division in divisionsSnapshot.docs) {
-      // Extract division name or value
       String? divisionName = division.get('name') as String?; // Adjust based on your Firestore schema
       print('--------------------');
       print(divisionName);
@@ -141,22 +137,25 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         .collection('organizations')
         .doc('houstondiscgolf')
         .collection('members')
-        .where('division', isEqualTo: divisionName)
         .where('checkedin', isEqualTo: true)
+        .where('division', isEqualTo: divisionName)  // Ensure this matches the field used in your database
         .orderBy('positionNo', descending: false)
+        .orderBy('startingTag', descending: false)
         .get();
-
-      //print('Query snapshot size: ${divisionSnapshot.size}');
 
       List<QueryDocumentSnapshot> players = divisionSnapshot.docs;
 
-      print('Number of players retrieved: ${players.length}');
-      for (var player in players) {
-        print('Player ID: ${player.id}');
-        print('Player Data: ${player.data()}');
-      }
+      // Filter out players with a tag of 0
+      List<QueryDocumentSnapshot> validPlayers = players
+        .where((player) {
+          final data = player.data() as Map<String, dynamic>?; // Safely cast to Map
+          final tag = data?['tag'];
+          // Check if tag is not 0
+          return int.tryParse(tag.toString()) != 0;
+        })
+        .toList();
 
-      List<int> tags = players
+      List<int> tags = validPlayers
         .map((player) {
           final data = player.data() as Map<String, dynamic>?; // Safely cast to Map
           final tag = data?['tag'];
@@ -172,15 +171,20 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       // Sort the tags in ascending order
       tags.sort();
 
+      print('Number of valid players retrieved: ${validPlayers.length}');
+      for (var player in validPlayers) {
+        print('Player ID: ${player.id}');
+      }
+
       print('--------------------');
       print('Pre Batch update call');
       print('--------------------');
       
       WriteBatch batch = _firestore.batch();
-      for (int i = 0; i < players.length; i++) {
-        DocumentReference playerRef = players[i].reference;
+      for (int i = 0; i < validPlayers.length; i++) {
+        DocumentReference playerRef = validPlayers[i].reference;
         int newTag = i < tags.length ? tags[i] : 0; // Handle case where tags list may be shorter
-        print('${players[i].id} new tag: $newTag');
+        print('Player ID: ${validPlayers[i].id} | New tag: $newTag');
         batch.update(playerRef, {'tag': newTag});
         hasUpdates = true;
       }
@@ -294,6 +298,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         .where('checkedin', isEqualTo: true)
                         .where('division', isEqualTo: divisionName)  // Use the division name for the query
                         .orderBy('positionNo', descending: false)
+                        .orderBy('startingTag', descending: false)
                         .snapshots(),
       builder: (context, userSnapshot) {
         if (userSnapshot.hasError) {
