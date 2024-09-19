@@ -6,11 +6,13 @@ import 'package:flutter/services.dart';
 class CheckinUserPage extends StatefulWidget {
   final String userId; // Add this line to accept user ID
   final String eventId; // Add this line to accept event ID
+  final String organizationId;
 
   const CheckinUserPage({
     super.key,
     required this.userId,
     required this.eventId,
+    required this.organizationId
   });
 
   @override
@@ -32,17 +34,9 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
   }
 
   void _fetchDivisions() async {
-    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-        .collection('events')
-        .doc(widget.eventId)
-        .get();
-
-    var eventData = eventDoc.data() as Map<String, dynamic>;
-    String organizationId = eventData['organization'] ?? '';
-
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('organizations')
-        .doc(organizationId)
+        .doc(widget.organizationId)
         .collection('divisions')
         .get();
 
@@ -61,17 +55,9 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
 
   // Load user data from Firestore
   Future<void> _loadUserData() async {
-    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-        .collection('events')
-        .doc(widget.eventId)
-        .get();
-
-    var eventData = eventDoc.data() as Map<String, dynamic>;
-    String organizationId = eventData['organization'] ?? '';
-
     DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
         .collection('organizations')
-        .doc(organizationId)
+        .doc(widget.organizationId)
         .collection('members')
         .doc(widget.userId)
         .get();
@@ -89,18 +75,10 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
   }
 
   Future<void> _checkinUser() async {
-    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-        .collection('events')
-        .doc(widget.eventId)
-        .get();
-
-    var eventData = eventDoc.data() as Map<String, dynamic>;
-    String organizationId = eventData['organization'] ?? '';
-
     if (_formKey.currentState?.validate() ?? false) {
       await FirebaseFirestore.instance
           .collection('organizations')
-          .doc(organizationId)
+          .doc(widget.organizationId)
           .collection('members')
           .doc(widget.userId)
           .update({
@@ -113,7 +91,7 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
       // Navigate back to the check-in list page after updating
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => CheckinListPage(eventId: widget.eventId),
+          builder: (context) => CheckinListPage(eventId: widget.eventId, organizationId: widget.organizationId),
         ),
       );
     }
@@ -140,7 +118,7 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
             Navigator.of(context).push(
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) =>
-                    CheckinListPage(eventId: widget.eventId),
+                    CheckinListPage(eventId: widget.eventId, organizationId: widget.organizationId),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                   return child; // No animation

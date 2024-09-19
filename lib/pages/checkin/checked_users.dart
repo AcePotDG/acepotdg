@@ -5,8 +5,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CheckedUsersPage extends StatefulWidget {
   final String eventId;
+  final String organizationId;
 
-  const CheckedUsersPage({super.key, required this.eventId});
+  const CheckedUsersPage({
+    super.key, 
+    required this.eventId,
+    required this.organizationId
+  });
   
   @override
   _CheckedUsersPageState createState() => _CheckedUsersPageState();
@@ -14,33 +19,6 @@ class CheckedUsersPage extends StatefulWidget {
 
 class _CheckedUsersPageState extends State<CheckedUsersPage> {
   String _searchText = "";
-  String organizationId = '';
-
-  void _fetchOrganizationId(String eventId) async {
-    try {
-      DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-          .collection('events')
-          .doc(eventId)
-          .get();
-
-      if (eventDoc.exists) {
-        var eventData = eventDoc.data() as Map<String, dynamic>;
-        String orgId = eventData['organization'] ?? '';
-
-        setState(() {
-          organizationId = orgId;
-        });
-      }
-    } catch (e) {
-      print('Error fetching organizationId: $e');
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchOrganizationId(widget.eventId);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +40,7 @@ class _CheckedUsersPageState extends State<CheckedUsersPage> {
           onPressed: () {
             Navigator.of(context).push(
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => CheckinListPage(eventId: widget.eventId),
+                pageBuilder: (context, animation, secondaryAnimation) => CheckinListPage(eventId: widget.eventId,organizationId: widget.organizationId),
                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
                   return child; // No animation
                 },
@@ -90,7 +68,7 @@ class _CheckedUsersPageState extends State<CheckedUsersPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("organizations")
-                  .doc(organizationId)
+                  .doc(widget.organizationId)
                   .collection("members")
                   .where("checkedin", isEqualTo: true) // Show only checked-in players
                   .where("nameLowercase", isGreaterThanOrEqualTo: _searchText)
@@ -121,6 +99,7 @@ class _CheckedUsersPageState extends State<CheckedUsersPage> {
                             pageBuilder: (context, animation, secondaryAnimation) => CheckinUserPage(
                               userId: user.id,
                               eventId: widget.eventId,
+                              organizationId: widget.organizationId
                             ),
                             transitionsBuilder: (context, animation, secondaryAnimation, child) {
                               return child; // No animation

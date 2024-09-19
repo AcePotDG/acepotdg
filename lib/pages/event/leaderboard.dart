@@ -23,7 +23,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Timer? _cacheTimer;
   bool _isLoading = false;
-  String organizationId = '';
 
   @override
   void initState() {
@@ -59,7 +58,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   Future<void> _updateFirestoreWithLeaderboardData(Map<String, List<dynamic>> leaderboardData) async {
     final collectionRef = _firestore.collection('organizations')
-          .doc(organizationId)
+          .doc(widget.organizationId)
           .collection('members');
 
     try {
@@ -103,7 +102,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
     QuerySnapshot divisionsSnapshot = await _firestore
         .collection('organizations')
-        .doc(organizationId)
+        .doc(widget.organizationId)
         .collection('divisions')
         .get();
         
@@ -111,7 +110,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       String? divisionName = division.get('name') as String?;
       QuerySnapshot divisionSnapshot = await _firestore
         .collection('organizations')
-        .doc(organizationId)
+        .doc(widget.organizationId)
         .collection('members')
         .where('checkedin', isEqualTo: true)
         .where('division', isEqualTo: divisionName)
@@ -201,7 +200,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               onPressed: () {
                 Navigator.of(context).push(
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => CheckinListPage(eventId: widget.eventId),
+                    pageBuilder: (context, animation, secondaryAnimation) => CheckinListPage(eventId: widget.eventId, organizationId: widget.organizationId),
                     transitionsBuilder: (context, animation, secondaryAnimation, child) {
                       return child;
                     },
@@ -227,7 +226,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           )
         : StreamBuilder<QuerySnapshot>(
           stream: _firestore.collection('organizations')
-                                    .doc(organizationId)
+                                    .doc(widget.organizationId)
                                     .collection('divisions')
                                     .orderBy('rank', descending: false)
                                     .snapshots(),
@@ -244,7 +243,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 final divisionName = divisionData['name'];
                 return StreamBuilder<QuerySnapshot>(
                   stream: _firestore.collection('organizations')
-                      .doc(organizationId)
+                      .doc(widget.organizationId)
                       .collection('members')
                       .where('checkedin', isEqualTo: true)
                       .where('division', isEqualTo: divisionName)

@@ -8,8 +8,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CheckinListPage extends StatefulWidget {
   final String eventId;
+  final String organizationId;
 
-  const CheckinListPage({super.key, required this.eventId});
+  const CheckinListPage({
+    super.key, 
+    required this.eventId,
+    required this.organizationId
+  });
   
   @override
   _CheckinListPageState createState() => _CheckinListPageState();
@@ -17,32 +22,10 @@ class CheckinListPage extends StatefulWidget {
 
 class _CheckinListPageState extends State<CheckinListPage> {
   String _searchText = "";
-  String organizationId = '';
-
-  void _fetchOrganizationId(String eventId) async {
-    try {
-      DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-          .collection('events')
-          .doc(eventId)
-          .get();
-
-      if (eventDoc.exists) {
-        var eventData = eventDoc.data() as Map<String, dynamic>;
-        String orgId = eventData['organization'] ?? '';
-
-        setState(() {
-          organizationId = orgId;
-        });
-      }
-    } catch (e) {
-      print('Error fetching organizationId: $e');
-    }
-  }
 
   @override
   void initState() {
     super.initState();
-    _fetchOrganizationId(widget.eventId);
   }
 
   @override
@@ -61,7 +44,7 @@ class _CheckinListPageState extends State<CheckinListPage> {
               onPressed: () {
                 Navigator.of(context).push(
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: widget.eventId, organizationId: organizationId),
+                    pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: widget.eventId, organizationId: widget.organizationId),
                     transitionsBuilder: (context, animation, secondaryAnimation, child) {
                       return child; // No animation
                     },
@@ -79,7 +62,7 @@ class _CheckinListPageState extends State<CheckinListPage> {
               onPressed: () {
                 Navigator.of(context).push(
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => CheckedUsersPage(eventId: widget.eventId),
+                    pageBuilder: (context, animation, secondaryAnimation) => CheckedUsersPage(eventId: widget.eventId,organizationId: widget.organizationId),
                     transitionsBuilder: (context, animation, secondaryAnimation, child) {
                       return child; // No animation
                     },
@@ -109,7 +92,7 @@ class _CheckinListPageState extends State<CheckinListPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("organizations")
-                  .doc(organizationId)
+                  .doc(widget.organizationId)
                   .collection("members")
                   .where("checkedin", isEqualTo: false)
                   .where("nameLowercase", isGreaterThanOrEqualTo: _searchText)
@@ -140,6 +123,7 @@ class _CheckinListPageState extends State<CheckinListPage> {
                             pageBuilder: (context, animation, secondaryAnimation) => CheckinUserPage(
                               userId: user.id,
                               eventId: widget.eventId,
+                              organizationId: widget.organizationId
                             ),
                             transitionsBuilder: (context, animation, secondaryAnimation, child) {
                               return child; // No animation
@@ -160,7 +144,7 @@ class _CheckinListPageState extends State<CheckinListPage> {
           // Navigate to the new user creation page
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => NewUserPage(eventId: widget.eventId), // Adjust with your page
+              builder: (context) => NewUserPage(eventId: widget.eventId,organizationId: widget.organizationId), // Adjust with your page
             ),
           );
         },

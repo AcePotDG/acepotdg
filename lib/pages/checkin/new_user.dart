@@ -5,10 +5,12 @@ import 'package:flutter/services.dart';
 
 class NewUserPage extends StatefulWidget {
   final String eventId; // Add this line to accept event ID
+  final String organizationId;
 
   const NewUserPage({
     super.key,
     required this.eventId,
+    required this.organizationId
   });
 
   @override
@@ -44,7 +46,7 @@ class _NewUserPageState extends State<NewUserPage> {
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              CheckinListPage(eventId: widget.eventId,),
+              CheckinListPage(eventId: widget.eventId,organizationId: widget.organizationId),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return child; // No animation
           },
@@ -61,17 +63,9 @@ class _NewUserPageState extends State<NewUserPage> {
 
   // Fetch divisions from Firestore
   void _fetchDivisions() async {
-    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-        .collection('events')
-        .doc(widget.eventId)
-        .get();
-
-    var eventData = eventDoc.data() as Map<String, dynamic>;
-    String organizationId = eventData['organization'] ?? '';
-
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('organizations')
-        .doc(organizationId)
+        .doc(widget.organizationId)
         .collection('divisions')
         .get();
 
@@ -104,7 +98,7 @@ class _NewUserPageState extends State<NewUserPage> {
           onPressed: () {
             Navigator.of(context).push(
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => CheckinListPage(eventId: widget.eventId,),
+                pageBuilder: (context, animation, secondaryAnimation) => CheckinListPage(eventId: widget.eventId,organizationId: widget.organizationId),
                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
                   return child; // No animation
                 },
