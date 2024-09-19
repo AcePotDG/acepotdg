@@ -61,7 +61,7 @@ class _CheckinListPageState extends State<CheckinListPage> {
               onPressed: () {
                 Navigator.of(context).push(
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: widget.eventId),
+                    pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: widget.eventId, organizationId: organizationId),
                     transitionsBuilder: (context, animation, secondaryAnimation, child) {
                       return child; // No animation
                     },

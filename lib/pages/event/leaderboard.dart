@@ -7,10 +7,12 @@ import 'package:acepotdg/pages/checkin/search_user.dart';
 
 class LeaderboardPage extends StatefulWidget {
   final String eventId;
+  final String organizationId;
 
   const LeaderboardPage({
     super.key, 
-    required this.eventId
+    required this.eventId,
+    required this.organizationId
   });
 
   @override
@@ -23,30 +25,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   bool _isLoading = false;
   String organizationId = '';
 
-  void _fetchOrganizationId(String eventId) async {
-    try {
-      DocumentSnapshot eventDoc = await FirebaseFirestore.instance
-          .collection('events')
-          .doc(eventId)
-          .get();
-
-      if (eventDoc.exists) {
-        var eventData = eventDoc.data() as Map<String, dynamic>;
-        String orgId = eventData['organization'] ?? '';
-
-        setState(() {
-          organizationId = orgId;
-        });
-      }
-    } catch (e) {
-      print('Error fetching organizationId: $e');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    _fetchOrganizationId(widget.eventId);
     //_startCacheTimer();
   }
 

@@ -24,7 +24,6 @@ class _NewEventPageState extends State<NewEventPage> {
   @override
   void initState() {
     super.initState();
-    _fetchOrganizations();
   }
 
   @override
@@ -79,6 +78,7 @@ class _NewEventPageState extends State<NewEventPage> {
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       final eventLink = _eventLink.text.trim();
+      final eventOrganization = _selectedOrganization;
 
       try {
         // Check if an event with the same link already exists
@@ -99,6 +99,7 @@ class _NewEventPageState extends State<NewEventPage> {
             'location': _eventLocation.text.trim(),
             'date': _selectedDate?.toIso8601String() ?? '',
             'link': eventLink,
+            'organization': eventOrganization
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Event added successfully!')),
@@ -115,7 +116,7 @@ class _NewEventPageState extends State<NewEventPage> {
 
           Navigator.of(context).push(
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: eventLink,), // Pass the event ID
+              pageBuilder: (context, animation, secondaryAnimation) => LeaderboardPage(eventId: eventLink, organizationId: eventOrganization.toString()), // Pass the event ID
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
                 return child; // No animation
               },
@@ -129,21 +130,6 @@ class _NewEventPageState extends State<NewEventPage> {
         );
       }
     }
-  }
-
-  // Fetch divisions from Firestore
-  void _fetchOrganizations() async {
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('organizations')
-        .get();
-
-    List<String> OrganizationList = snapshot.docs
-        .map((doc) => doc['name'] as String) // Assuming each document has a 'name' field
-        .toList();
-
-    setState(() {
-      _Organizations.addAll(OrganizationList);
-    });
   }
 
   @override

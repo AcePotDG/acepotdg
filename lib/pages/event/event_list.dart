@@ -126,6 +126,7 @@ class HomePage extends StatelessWidget {
             itemBuilder: (context, index) {
               final event = events[index];
               final eventId = event.id; // Get event document ID for deletion
+              final organizationId = event['organization'];
               final eventName = event['name'] ?? 'No name';
               final eventLocation = event['location'] ?? 'No location';
               final eventDate = event['date'] != null
@@ -173,7 +174,7 @@ class HomePage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => LeaderboardPage(eventId: eventLink),
+                        builder: (context) => LeaderboardPage(eventId: eventId, organizationId: organizationId),
                       ),
                     );
                   },
