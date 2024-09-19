@@ -43,6 +43,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Future<void> _fetchLeaderboardData() async {
+    print('Organization ID: ' + widget.organizationId);
+    print('Event ID: ' + widget.eventId);
     setState(() {
       _isLoading = true;
     });
@@ -232,6 +234,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                     .snapshots(),
           builder: (context, divisionSnapshot) {
             final divisions = divisionSnapshot.data!.docs;
+            print('Org ID: ' + widget.organizationId);
             if (!divisionSnapshot.hasData || divisionSnapshot.data!.docs.isEmpty) {
               return const Center(child: Text('No divisions found.'));
             }

@@ -126,7 +126,7 @@ class HomePage extends StatelessWidget {
             itemBuilder: (context, index) {
               final event = events[index];
               final eventId = event.id; // Get event document ID for deletion
-              final organizationId = event['organization'];
+              final organizationId = event['organization'] ?? 'No Organization';
               final eventName = event['name'] ?? 'No name';
               final eventLocation = event['location'] ?? 'No location';
               final eventDate = event['date'] != null
