@@ -96,10 +96,17 @@ exports.setParticipantData = onRequest(async (req, res) => {
 
     const batch = db.batch();
 
+    const eventId = req.body.eventId;
+    const eventRef = db.collection('events').doc(eventId);
+    const eventDoc = await eventRef.get();
+
+    const eventData = eventDoc.data();
+    const organizationId = eventData.organization;
+
     for (const participant of participants) {
       const userRef = db
           .collection("organizations")
-          .doc("houstondiscgolf")
+          .doc(organizationId)
           .collection("members")
           .doc(participant.userId);
 
@@ -205,9 +212,15 @@ async function updateUserDatabaseEvent(eventId) {
       userIdToNameMap.set(userId, name);
     });
 
+    const eventRef = db.collection('events').doc(eventId);
+    const eventDoc = await eventRef.get();
+
+    const eventData = eventDoc.data();
+    const organizationId = eventData.organization;
+
     for (const [userId, name] of userIdToNameMap) {
       const userRef = db.collection("organizations")
-          .doc("houstondiscgolf").collection("members").doc(userId);
+          .doc(organizationId).collection("members").doc(userId);
       const doc = await userRef.get();
 
       if (doc.exists) {

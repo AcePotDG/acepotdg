@@ -18,6 +18,14 @@ class _NewEventPageState extends State<NewEventPage> {
   final TextEditingController _eventDate = TextEditingController();
   final TextEditingController _eventLink = TextEditingController();
   DateTime? _selectedDate;
+  String? _selectedOrganization;
+  final List<String> _Organizations= [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrganizations();
+  }
 
   @override
   void dispose() {
@@ -123,6 +131,21 @@ class _NewEventPageState extends State<NewEventPage> {
     }
   }
 
+  // Fetch divisions from Firestore
+  void _fetchOrganizations() async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('organizations')
+        .get();
+
+    List<String> OrganizationList = snapshot.docs
+        .map((doc) => doc['name'] as String) // Assuming each document has a 'name' field
+        .toList();
+
+    setState(() {
+      _Organizations.addAll(OrganizationList);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,92 +175,190 @@ class _NewEventPageState extends State<NewEventPage> {
           },
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Form(
-            key: _formKey,
-            child: OverflowBar(
-              overflowSpacing: 20,
-              children: [
-                TextFormField(
-                  controller: _eventName,
-                  validator: (text) {
-                    if (text == null || text.isEmpty) {
-                      return 'Please enter the event name.';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Event Name",
-                  ),
-                ),
-                TextFormField(
-                  controller: _eventLocation,
-                  validator: (text) {
-                    if (text == null || text.isEmpty) {
-                      return 'Please enter the event location.';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Event Location",
-                  ),
-                ),
-                TextFormField(
-                  controller: _eventDate,
-                  decoration: InputDecoration(
-                    labelText: 'Event Date',
-                    hintText: _selectedDate != null
-                        ? '${_selectedDate!.toLocal()}'.split(' ')[0]
-                        : 'Select a date',
-                  ),
-                  validator: (value) {
-                    if (_selectedDate == null) {
-                      return 'Please select a date';
-                    }
-                    return null;
-                  },
-                  onTap: () => _selectDate(context),
-                  readOnly: true, // Prevent user from typing manually
-                ),
-                TextFormField(
-                  controller: _eventLink,
-                  validator: (text) {
-                    if (text == null || text.isEmpty) {
-                      return 'Please enter the event link.';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Event Link",
-                  ),
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  height: 45,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        _submitForm();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: Colors.lightBlue.shade400, // Button text color
-                    ),
-                    child: isLoading
-                    ? const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedOrganization,
+                      items: _Organizations.map((String Organization) {
+                        return DropdownMenuItem<String>(
+                          value: Organization,
+                          child: Text(Organization),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedOrganization = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select an Organization.';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.lightBlue.shade400),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        hintText: 'Select Organization',
+                        fillColor: Colors.grey[200],
+                        filled: true,
                       ),
-                    )
-                    : const Text("Create Event"),
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: TextFormField(
+                      controller: _eventName,
+                      validator: (text) {
+                        if (text == null || text.isEmpty) {
+                          return 'Please enter the event name.';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.lightBlue.shade400),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        hintText: 'Event Name',
+                        fillColor: Colors.grey[200],
+                        filled: true,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: TextFormField(
+                      controller: _eventLocation,
+                      validator: (text) {
+                        if (text == null || text.isEmpty) {
+                          return 'Please enter the event location.';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.lightBlue.shade400),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        hintText: 'Event Location',
+                        fillColor: Colors.grey[200],
+                        filled: true,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: TextFormField(
+                      controller: _eventDate,
+                      validator: (text) {
+                        if (text == null || text.isEmpty) {
+                          return 'Please enter the event date.';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.lightBlue.shade400),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        hintText: 'Event Date',
+                        fillColor: Colors.grey[200],
+                        filled: true,
+                      ),
+                      onTap: () => _selectDate(context),
+                      readOnly: true,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: TextFormField(
+                      controller: _eventLink,
+                      validator: (text) {
+                        if (text == null || text.isEmpty) {
+                          return 'Please enter the event link.';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.lightBlue.shade400),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        hintText: 'Event Link',
+                        fillColor: Colors.grey[200],
+                        filled: true,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          _submitForm();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.lightBlue.shade400,
+                        padding: EdgeInsets.all(20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Create Event',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )
-        )
+          ),
+        ),
       ),
     );
   }

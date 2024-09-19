@@ -14,6 +14,33 @@ class CheckedUsersPage extends StatefulWidget {
 
 class _CheckedUsersPageState extends State<CheckedUsersPage> {
   String _searchText = "";
+  String organizationId = '';
+
+  void _fetchOrganizationId(String eventId) async {
+    try {
+      DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+          .collection('events')
+          .doc(eventId)
+          .get();
+
+      if (eventDoc.exists) {
+        var eventData = eventDoc.data() as Map<String, dynamic>;
+        String orgId = eventData['organization'] ?? '';
+
+        setState(() {
+          organizationId = orgId;
+        });
+      }
+    } catch (e) {
+      print('Error fetching organizationId: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrganizationId(widget.eventId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +90,7 @@ class _CheckedUsersPageState extends State<CheckedUsersPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("organizations")
-                  .doc("houstondiscgolf")
+                  .doc(organizationId)
                   .collection("members")
                   .where("checkedin", isEqualTo: true) // Show only checked-in players
                   .where("nameLowercase", isGreaterThanOrEqualTo: _searchText)

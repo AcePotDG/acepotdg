@@ -16,6 +16,7 @@ class NewUserPage extends StatefulWidget {
 }
 
 class _NewUserPageState extends State<NewUserPage> {
+  String? selectedDivision; // For storing selected division
   int tag = 0; // For the tag text box
   bool isLoading = true; // For loading user data
   final _formKey = GlobalKey<FormState>();
@@ -23,12 +24,10 @@ class _NewUserPageState extends State<NewUserPage> {
   final TextEditingController _tag = TextEditingController();
   String? _selectedDivision;
   final List<String> _divisions = [];
-
   
   @override
   void initState() {
     super.initState();
-    // Fetch initial user data here
     _fetchDivisions();
   }
 
@@ -62,9 +61,17 @@ class _NewUserPageState extends State<NewUserPage> {
 
   // Fetch divisions from Firestore
   void _fetchDivisions() async {
+    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .get();
+
+    var eventData = eventDoc.data() as Map<String, dynamic>;
+    String organizationId = eventData['organization'] ?? '';
+
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('organizations')
-        .doc('houstondiscgolf')
+        .doc(organizationId)
         .collection('divisions')
         .get();
 

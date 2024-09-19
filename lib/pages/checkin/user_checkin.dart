@@ -32,9 +32,17 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
   }
 
   void _fetchDivisions() async {
+    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .get();
+
+    var eventData = eventDoc.data() as Map<String, dynamic>;
+    String organizationId = eventData['organization'] ?? '';
+
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('organizations')
-        .doc('houstondiscgolf')
+        .doc(organizationId)
         .collection('divisions')
         .get();
 
@@ -53,9 +61,17 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
 
   // Load user data from Firestore
   Future<void> _loadUserData() async {
+    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .get();
+
+    var eventData = eventDoc.data() as Map<String, dynamic>;
+    String organizationId = eventData['organization'] ?? '';
+
     DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
         .collection('organizations')
-        .doc('houstondiscgolf')
+        .doc(organizationId)
         .collection('members')
         .doc(widget.userId)
         .get();
@@ -73,10 +89,18 @@ class _CheckinUserPageState extends State<CheckinUserPage> {
   }
 
   Future<void> _checkinUser() async {
+    DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.eventId)
+        .get();
+
+    var eventData = eventDoc.data() as Map<String, dynamic>;
+    String organizationId = eventData['organization'] ?? '';
+
     if (_formKey.currentState?.validate() ?? false) {
       await FirebaseFirestore.instance
           .collection('organizations')
-          .doc('houstondiscgolf')
+          .doc(organizationId)
           .collection('members')
           .doc(widget.userId)
           .update({

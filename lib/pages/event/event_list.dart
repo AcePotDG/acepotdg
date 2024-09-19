@@ -8,14 +8,20 @@ import 'package:flutter/material.dart';
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
-  //User? user = UserCredential.user;
-
   Future<void> _deleteEvent(BuildContext context, String eventId, String eventName) async {
     try {
-      // Query users with `checkedin: true` for this event
+      DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+        .collection('events')
+        .doc(eventId)
+        .get();
+
+      var eventData = eventDoc.data() as Map<String, dynamic>;
+      String organizationId = eventData['organization'] ?? '';
+
+      // Query users with `checkedin: true` for this organization
       var usersSnapshot = await FirebaseFirestore.instance
           .collection('organizations')
-          .doc('houstondiscgolf')
+          .doc(organizationId) // Use organizationId here
           .collection('members')
           .where('checkedin', isEqualTo: true)
           .get();
